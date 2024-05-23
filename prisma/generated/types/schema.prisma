@@ -1,0 +1,133 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "generated/types"
+}
+
+generator erd {
+  provider = "prisma-erd-generator"
+  output   = "./ERD.svg"
+}
+
+generator fakeData {
+  provider = "prisma-generator-fake-data"
+  output   = "generated/fake-data.ts"
+}
+
+generator express {
+  provider = "prisma-generator-express"
+  output   = "generated/express"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int            @id @default(autoincrement())
+  username      String         @unique
+  password      String
+  email         String         @unique
+  fullName      String
+  createdAt     DateTime       @default(now())
+  cryptoWallets CryptoWallet[]
+  fiatWallets   FiatWallet[]
+  transactions  Transaction[]
+  transfers     Transfer[]
+
+  ///FAKE: { username: faker.internet.userName(), password: faker.internet.password(), email: faker.internet.email(), fullName: faker.name.fullName() }
+}
+
+model Cryptocurrency {
+  id            Int            @id @default(autoincrement())
+  name          String
+  symbol        String         @unique
+  cryptoWallets CryptoWallet[]
+  transactions  Transaction[]
+
+  ///FAKE: { symbol: faker.finance.currencySymbol() }
+}
+
+model FiatCurrency {
+  id           Int           @id @default(autoincrement())
+  name         String
+  symbol       String        @unique
+  fiatWallets  FiatWallet[]
+  transactions Transaction[]
+
+  ///FAKE: { name: faker.finance.currencyName(), symbol: faker.finance.currencyCode() }
+}
+
+model CryptoWallet {
+  id             Int            @id @default(autoincrement())
+  userId         Int
+  cryptoId       Int
+  balance        Float          @default(0)
+  user           User           @relation(fields: [userId], references: [id])
+  cryptocurrency Cryptocurrency @relation(fields: [cryptoId], references: [id])
+  transfersFrom  Transfer[]     @relation("TransferSender")
+  transfersTo    Transfer[]     @relation("TransferReceiver")
+}
+
+model FiatWallet {
+  id           Int          @id @default(autoincrement())
+  userId       Int
+  fiatId       Int
+  balance      Float        @default(0)
+  user         User         @relation(fields: [userId], references: [id])
+  fiatCurrency FiatCurrency @relation(fields: [fiatId], references: [id])
+
+  ///FAKE: { balance: faker.finance.amount() }
+}
+
+model Transaction {
+  id              Int             @id @default(autoincrement())
+  userId          Int
+  cryptoId        Int
+  fiatId          Int
+  transactionType TransactionType
+  amount          Float
+  price           Float
+  createdAt       DateTime        @default(now())
+  user            User            @relation(fields: [userId], references: [id])
+  cryptocurrency  Cryptocurrency  @relation(fields: [cryptoId], references: [id])
+  fiatCurrency    FiatCurrency    @relation(fields: [fiatId], references: [id])
+
+  ///FAKE: { amount: faker.finance.amount(), price: faker.finance.amount() }
+}
+
+model Transfer {
+  id               Int               @id @default(autoincrement())
+  userId           Int
+  senderWalletId   Int
+  receiverWalletId Int
+  amount           Float
+  transferType     TransferType
+  createdAt        DateTime          @default(now())
+  user             User              @relation(fields: [userId], references: [id])
+  senderWallet     CryptoWallet      @relation("TransferSender", fields: [senderWalletId], references: [id])
+  receiverWallet   CryptoWallet      @relation("TransferReceiver", fields: [receiverWalletId], references: [id])
+  externalTransfer ExternalTransfer?
+
+  ///FAKE: { amount: faker.finance.amount() }
+}
+
+model ExternalTransfer {
+  id              Int      @id @default(autoincrement())
+  transferId      Int      @unique
+  externalAddress String
+  createdAt       DateTime @default(now())
+  transfer        Transfer @relation(fields: [transferId], references: [id])
+
+  ///FAKE: { externalAddress: faker.finance.bitcoinAddress() }
+}
+
+enum TransactionType {
+  BUY
+  SELL
+}
+
+enum TransferType {
+  INTERNAL
+  EXTERNAL
+}
