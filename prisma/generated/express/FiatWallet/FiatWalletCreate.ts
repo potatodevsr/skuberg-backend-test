@@ -34,9 +34,13 @@ export async function FiatWalletCreate(req: CreateRequest, res: Response, next: 
     } else {
       res.status(201).json(data);
     }
-  } catch (error) {
-    console.error('Error in handling create request:', error);
-    res.status(500).json({ error: error.message });
+  } catch (error: unknown) {
+    console.error("Error in handling create request:", error);
+    if (error instanceof Error) {
+      res.status(500).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: "Unknown error occurred" });
+    }
     next(error);
   }
 }

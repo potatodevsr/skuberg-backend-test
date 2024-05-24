@@ -18,7 +18,7 @@
     "@faker-js/faker": "^8.4.1",
     "@types/express": "^4.17.21",
     "@types/node": "^20.12.12",
-    "prisma-generator-express": "^1.4.0",
+    "prisma-generator-express": "^1.8.1",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.4.5"

@@ -16,13 +16,14 @@ export interface FindManyRequest extends Request {
   outputValidation?: ZodTypeAny;
   omitOutputValidation?: boolean;
   passToNext?: boolean;
-  locals: {
+  locals?: {
     data?: Cryptocurrency[]
   }
 }
 export type FindManyMiddleware = RequestHandler<ParamsDictionary, any, any, Prisma.CryptocurrencyFindManyArgs & ParsedQs, Record<string, any>>
 
 export async function CryptocurrencyFindMany(req: FindManyRequest, res: Response, next: NextFunction) {
+  console.log('req.omitOutputValidation', req.omitOutputValidation)
   try {
     if (!req.outputValidation && !req.omitOutputValidation) {
       throw new Error('Output validation schema or omission flag must be provided.');
@@ -30,7 +31,7 @@ export async function CryptocurrencyFindMany(req: FindManyRequest, res: Response
 
     const data = await req.prisma.cryptocurrency.findMany(req.query as Prisma.CryptocurrencyFindManyArgs);
     if (req.passToNext) {
-      req.locals.data = data;
+      if (req.locals) req.locals.data = data;
       next();
     } else if (!req.omitOutputValidation && req.outputValidation) {
       const validationResult = req.outputValidation.safeParse(data);
@@ -44,9 +45,13 @@ export async function CryptocurrencyFindMany(req: FindManyRequest, res: Response
     } else {
       res.status(200).json(data);
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error in handling request:', error);
-    res.status(500).json({ error: error.message });
+    if (error instanceof Error) {
+      res.status(500).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: "Unknown error occurred" });
+    }
     next(error);
   }
 }

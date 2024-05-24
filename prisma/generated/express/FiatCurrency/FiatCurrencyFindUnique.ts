@@ -16,7 +16,7 @@ export interface FindUniqueRequest extends Request {
   outputValidation?: ZodTypeAny;
   omitOutputValidation?: boolean;
   passToNext?: boolean;
-  locals: {
+  locals?: {
     data?: FiatCurrency | null
   }
 }
@@ -30,7 +30,7 @@ export async function FiatCurrencyFindUnique(req: FindUniqueRequest, res: Respon
 
     const data = await req.prisma.fiatCurrency.findUnique(req.query as Prisma.FiatCurrencyFindUniqueArgs);
     if (req.passToNext) {
-      req.locals.data = data;
+      if (req.locals) req.locals.data = data;
       next();
     } else if (!req.omitOutputValidation && req.outputValidation) {
       const validationResult = req.outputValidation.safeParse(data);
@@ -44,9 +44,13 @@ export async function FiatCurrencyFindUnique(req: FindUniqueRequest, res: Respon
     } else {
       res.status(200).json(data);
     }
-  } catch (error) {
-    console.error('Error in handling request:', error);
-    res.status(500).json({ error: error.message });
+  } catch (error: unknown) {
+    console.error("Error in handling findUnique request:", error);
+    if (error instanceof Error) {
+      res.status(500).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: "Unknown error occurred" });
+    }
     next(error);
   }
 }

@@ -1,5 +1,6 @@
-import express from 'express'
-import type { Response, Request, NextFunction } from "express";
+import express, { json } from 'express'
+// import type { Response, Request, NextFunction } from "express";
+import type { Response, Request, NextFunction, RequestHandler } from 'express'
 
 import { CryptocurrencyRouter } from '../prisma/generated/express/Cryptocurrency'
 import { PrismaClient } from '@prisma/client';
@@ -9,6 +10,8 @@ import { FiatCurrencyRouter } from '../prisma/generated/express/FiatCurrency';
 import { FiatWalletRouter } from '../prisma/generated/express/FiatWallet';
 import { TransferRouter } from '../prisma/generated/express/Transfer';
 import { UserRouter } from '../prisma/generated/express/User';
+import RouteConfig from '../prisma/generated/express/RouteConfig';
+import { TransactionRouter } from '../prisma/generated/express/Transaction';
 
 const app = express()
 
@@ -18,22 +21,20 @@ const addPrisma = (req: Request, res: Response, next: NextFunction) => {
     req.omitOutputValidation = true
     next()
 }
-
-const someRouterConfig = {
-    findManyMiddleware: [addPrisma],
-    findUniqueMiddleware: [addPrisma],
-    createMiddleware: [addPrisma],
-    updateMiddleware: [addPrisma],
-    deleteMiddleware: [addPrisma],
-}
-
-app.use('/cryptocurrency', CryptocurrencyRouter(someRouterConfig))
-app.use('/crypto-wallet', CryptoWalletRouter(someRouterConfig))
-app.use('/external-transfer', ExternalTransferRouter(someRouterConfig))
-app.use('/fiat-currency', FiatCurrencyRouter(someRouterConfig))
-app.use('/fiat-wallet', FiatWalletRouter(someRouterConfig))
-app.use('/transfer', TransferRouter(someRouterConfig))
-app.use('/user', UserRouter(someRouterConfig))
+const config = {
+    addModelPrefix: true,
+    enableAll: true,
+} as RouteConfig<RequestHandler>
+app.use(json())
+app.use(addPrisma)
+app.use(CryptocurrencyRouter(config))
+app.use(CryptoWalletRouter(config))
+app.use(ExternalTransferRouter(config))
+app.use(FiatCurrencyRouter(config))
+app.use(FiatWalletRouter(config))
+app.use(TransferRouter(config))
+app.use(UserRouter(config))
+app.use(TransactionRouter(config))
 
 app.listen(3000, () => {
     console.log('Server is running on http://localhost:3000')

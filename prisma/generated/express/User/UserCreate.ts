@@ -20,7 +20,7 @@ export async function UserCreate(req: CreateRequest, res: Response, next: NextFu
     if (!req.outputValidation && !req.omitOutputValidation) {
       throw new Error('Output validation schema or omission flag must be provided.');
     }
-
+    console.log('req.body', req.body)
     const data = await req.prisma.user.create(req.body);
     if (!req.omitOutputValidation && req.outputValidation) {
       const validationResult = req.outputValidation.safeParse(data);
@@ -34,9 +34,13 @@ export async function UserCreate(req: CreateRequest, res: Response, next: NextFu
     } else {
       res.status(201).json(data);
     }
-  } catch (error) {
-    console.error('Error in handling create request:', error);
-    res.status(500).json({ error: error.message });
+  } catch (error: unknown) {
+    console.error("Error in handling create request:", error);
+    if (error instanceof Error) {
+      res.status(500).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: "Unknown error occurred" });
+    }
     next(error);
   }
 }

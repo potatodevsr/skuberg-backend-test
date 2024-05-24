@@ -34,9 +34,13 @@ export async function UserCreateMany(req: CreateManyRequest, res: Response, next
     } else {
       res.status(201).json(data);
     }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error in handling createMany request:', error);
-    res.status(500).json({ error: error.message });
+    if (error instanceof Error) {
+      res.status(500).json({ error: error.message });
+    } else {
+      res.status(500).json({ error: "Unknown error occurred" });
+    }
     next(error);
   }
 }

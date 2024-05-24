@@ -1,170 +1,145 @@
 
 import express, { RequestHandler } from 'express';
-import { CryptoWalletFindFirst, type FindFirstMiddleware } from './CryptoWalletFindFirst';
-import { CryptoWalletFindMany, type FindManyMiddleware } from './CryptoWalletFindMany';
-import { CryptoWalletFindUnique, type FindUniqueMiddleware } from './CryptoWalletFindUnique';
-import { CryptoWalletCreate, type CreateMiddleware } from './CryptoWalletCreate';
-import { CryptoWalletCreateMany, type CreateManyMiddleware } from './CryptoWalletCreateMany';
-import { CryptoWalletUpdate, type UpdateMiddleware } from './CryptoWalletUpdate';
-import { CryptoWalletUpdateMany, type UpdateManyMiddleware } from './CryptoWalletUpdateMany';
-import { CryptoWalletUpsert, type UpsertMiddleware } from './CryptoWalletUpsert';
-import { CryptoWalletDelete, type DeleteMiddleware } from './CryptoWalletDelete';
-import { CryptoWalletDeleteMany, type DeleteManyMiddleware } from './CryptoWalletDeleteMany';
-import { CryptoWalletAggregate, type AggregateMiddleware } from './CryptoWalletAggregate';
-import { CryptoWalletCount, type CountMiddleware } from './CryptoWalletCount';
-import { CryptoWalletGroupBy, type GroupByMiddleware } from './CryptoWalletGroupBy';
+import { CryptoWalletFindFirst } from './CryptoWalletFindFirst';
+import { CryptoWalletFindMany } from './CryptoWalletFindMany';
+import { CryptoWalletFindUnique } from './CryptoWalletFindUnique';
+import { CryptoWalletCreate } from './CryptoWalletCreate';
+import { CryptoWalletCreateMany } from './CryptoWalletCreateMany';
+import { CryptoWalletUpdate } from './CryptoWalletUpdate';
+import { CryptoWalletUpdateMany } from './CryptoWalletUpdateMany';
+import { CryptoWalletUpsert } from './CryptoWalletUpsert';
+import { CryptoWalletDelete } from './CryptoWalletDelete';
+import { CryptoWalletDeleteMany } from './CryptoWalletDeleteMany';
+import { CryptoWalletAggregate } from './CryptoWalletAggregate';
+import { CryptoWalletCount } from './CryptoWalletCount';
+import { CryptoWalletGroupBy } from './CryptoWalletGroupBy';
+import { RouteConfig } from "../RouteConfig";
 
-interface RouteConfig {
-  findFirstMiddleware?: FindFirstMiddleware[]
-  findFirstNextMiddleware?: RequestHandler[]
-
-  findManyMiddleware?: FindManyMiddleware[]
-  findManyNextMiddleware?: RequestHandler[]
-  
-  findUniqueMiddleware?: FindUniqueMiddleware[]
-  findUniqueNextMiddleware?: RequestHandler[]
-
-  createMiddleware?: CreateMiddleware[]
-  createNextMiddleware?: RequestHandler[]
-
-  createManyMiddleware?: CreateManyMiddleware[]
-  createManyNextMiddleware?: RequestHandler[]
-
-  updateMiddleware?: UpdateMiddleware[]
-  updateNextMiddleware?: RequestHandler[]
-
-  updateManyMiddleware?: UpdateManyMiddleware[]
-  updateManyNextMiddleware?: RequestHandler[]
-
-  upsertMiddleware?: UpsertMiddleware[]
-  upsertNextMiddleware?: RequestHandler[]
-
-  deleteMiddleware?: DeleteMiddleware[]
-  deleteNextMiddleware?: RequestHandler[]
-
-  deleteManyMiddleware?: DeleteManyMiddleware[]
-  deleteManyNextMiddleware?: RequestHandler[]
-
-  aggregateMiddleware?: AggregateMiddleware[]
-  aggregateNextMiddleware?: RequestHandler[]
-
-  countMiddleware?: CountMiddleware[]
-  countNextMiddleware?: RequestHandler[]
-
-  groupByMiddleware?: GroupByMiddleware[]
-  groupByNextMiddleware?: RequestHandler[]
-}
+const defaultBeforeAfter = {
+  before: [] as RequestHandler[],
+  after: [] as RequestHandler[],
+};
 
 /**
  * Generates an Express router for CryptoWallet model.
  * @param config Contains optional middleware to enable routes.
  * @returns {express.Router}
  */
-export function CryptoWalletRouter(config: RouteConfig) {
+export function CryptoWalletRouter(config: RouteConfig<RequestHandler>) {
   const router = express.Router();
-  
-  if (config?.findFirstMiddleware && config?.findFirstMiddleware.length) {
-    const middlewares = [...config.findFirstMiddleware, CryptoWalletFindFirst]
-    if (config.findFirstNextMiddleware) {
-      middlewares.push(...config.findFirstNextMiddleware);
+  const basePath = config.addModelPrefix ? '/cryptowallet' : '';
+
+  const setupRoute = (
+    path: string,
+    method: "all" | "get" | "post" | "put" | "delete" | "patch" | "options" | "head",
+    middlewares: RequestHandler[],
+    handler: RequestHandler
+  ) => {
+    router[method](basePath + path, ...middlewares, handler);
+  };
+
+  if (config.enableAll || config?.findFirst) {
+    const { before = [], after = [] } = config.findFirst || defaultBeforeAfter;
+    setupRoute('/first', 'get', before, CryptoWalletFindFirst as RequestHandler);
+    if (after.length) {
+      router.use(basePath + '/first', ...after);
     }
-    router.get('/first', ...middlewares as FindFirstMiddleware[]);
   }
 
-  if (config?.findManyMiddleware && config?.findManyMiddleware.length) {
-    const middlewares = [...config.findManyMiddleware, CryptoWalletFindMany]
-    if (config.findManyNextMiddleware) {
-      middlewares.push(...config.findManyNextMiddleware);
+  if (config.enableAll || config?.findMany) {
+    const { before = [], after = [] } = config.findMany || defaultBeforeAfter;
+    setupRoute('/', 'get', before, CryptoWalletFindMany as RequestHandler);
+    if (after.length) {
+      router.use(basePath + '/', ...after);
     }
-    router.get('/', ...middlewares as FindManyMiddleware[]);
   }
 
-  if (config?.findUniqueMiddleware && config?.findUniqueMiddleware.length) {
-    const middlewares = [...config.findUniqueMiddleware, CryptoWalletFindUnique]
-    if (config.findUniqueNextMiddleware) {
-      middlewares.push(...config.findUniqueNextMiddleware);
+  if (config.enableAll || config?.findUnique) {
+    const { before = [], after = [] } = config.findUnique || defaultBeforeAfter;
+    setupRoute('/:id', 'get', before, CryptoWalletFindUnique as any);
+    if (after.length) {
+      router.use(basePath + '/:id', ...after);
     }
-    router.get('/:id', ...middlewares as FindUniqueMiddleware[]);
   }
 
-  if (config?.createMiddleware && config?.createMiddleware.length) {
-    const middlewares = [...config.createMiddleware, CryptoWalletCreate]
-    if (config.createNextMiddleware) {
-      middlewares.push(...config.createNextMiddleware);
+  if (config.enableAll || config?.create) {
+    const { before = [], after = [] } = config.create || defaultBeforeAfter;
+    setupRoute('/', 'post', before, CryptoWalletCreate as RequestHandler);
+    if (after.length) {
+      router.use(basePath + '/', ...after);
     }
-    router.post('/', ...middlewares as CreateMiddleware[]);
   }
 
-  if (config?.createManyMiddleware && config?.createManyMiddleware.length) {
-    const middlewares = [...config.createManyMiddleware, CryptoWalletCreateMany]
-    if (config.createManyNextMiddleware) {
-      middlewares.push(...config.createManyNextMiddleware);
+  if (config.enableAll || config?.createMany) {
+    const { before = [], after = [] } = config.createMany || defaultBeforeAfter;
+    setupRoute('/many', 'post', before, CryptoWalletCreateMany as RequestHandler);
+    if (after.length) {
+      router.use(basePath + '/many', ...after);
     }
-    router.post('/many', ...middlewares as CreateManyMiddleware[]);
   }
 
-  if (config?.updateMiddleware && config?.updateMiddleware.length) {
-    const middlewares = [...config.updateMiddleware, CryptoWalletUpdate]
-    if (config.updateNextMiddleware) {
-      middlewares.push(...config.updateNextMiddleware);
+  if (config.enableAll || config?.update) {
+    const { before = [], after = [] } = config.update || defaultBeforeAfter;
+    setupRoute('/', 'put', before, CryptoWalletUpdate as RequestHandler);
+    if (after.length) {
+      router.use(basePath + '/', ...after);
     }
-    router.put('/', ...middlewares as UpdateMiddleware[]);
   }
 
-  if (config?.updateManyMiddleware && config?.updateManyMiddleware.length) {
-    const middlewares = [...config.updateManyMiddleware, CryptoWalletUpdateMany]
-    if (config.updateManyNextMiddleware) {
-      middlewares.push(...config.updateManyNextMiddleware);
+  if (config.enableAll || config?.updateMany) {
+    const { before = [], after = [] } = config.updateMany || defaultBeforeAfter;
+    setupRoute('/many', 'put', before, CryptoWalletUpdateMany as RequestHandler);
+    if (after.length) {
+      router.use(basePath + '/many', ...after);
     }
-    router.put('/many', ...middlewares as UpdateManyMiddleware[]);
   }
 
-  if (config?.upsertMiddleware && config?.upsertMiddleware.length) {
-    const middlewares = [...config.upsertMiddleware, CryptoWalletUpsert]
-    if (config.upsertNextMiddleware) {
-      middlewares.push(...config.upsertNextMiddleware);
+  if (config.enableAll || config?.upsert) {
+    const { before = [], after = [] } = config.upsert || defaultBeforeAfter;
+    setupRoute('/', 'patch', before, CryptoWalletUpsert as RequestHandler);
+    if (after.length) {
+      router.use(basePath + '/', ...after);
     }
-    router.patch('/', ...middlewares as UpsertMiddleware[]);
   }
 
-  if (config?.deleteMiddleware && config?.deleteMiddleware.length) {
-    const middlewares = [...config.deleteMiddleware, CryptoWalletDelete]
-    if (config.deleteNextMiddleware) {
-      middlewares.push(...config.deleteNextMiddleware);
+  if (config.enableAll || config?.delete) {
+    const { before = [], after = [] } = config.delete || defaultBeforeAfter;
+    setupRoute('/', 'delete', before, CryptoWalletDelete as RequestHandler);
+    if (after.length) {
+      router.use(basePath + '/', ...after);
     }
-    router.delete('/', ...middlewares as DeleteMiddleware[]);
   }
 
-  if (config?.deleteManyMiddleware && config?.deleteManyMiddleware.length) {
-    const middlewares = [...config.deleteManyMiddleware, CryptoWalletDeleteMany]
-    if (config.deleteManyNextMiddleware) {
-      middlewares.push(...config.deleteManyNextMiddleware);
+  if (config.enableAll || config?.deleteMany) {
+    const { before = [], after = [] } = config.deleteMany || defaultBeforeAfter;
+    setupRoute('/many', 'delete', before, CryptoWalletDeleteMany as RequestHandler);
+    if (after.length) {
+      router.use(basePath + '/many', ...after);
     }
-    router.delete('/many', ...middlewares as DeleteManyMiddleware[]);
   }
 
-  if (config?.aggregateMiddleware && config?.aggregateMiddleware.length) {
-    const middlewares = [...config.aggregateMiddleware, CryptoWalletAggregate]
-    if (config.aggregateNextMiddleware) {
-      middlewares.push(...config.aggregateNextMiddleware);
+  if (config.enableAll || config?.aggregate) {
+    const { before = [], after = [] } = config.aggregate || defaultBeforeAfter;
+    setupRoute('/aggregate', 'get', before, CryptoWalletAggregate as RequestHandler);
+    if (after.length) {
+      router.use(basePath + '/aggregate', ...after);
     }
-    router.get('/aggregate', ...middlewares as AggregateMiddleware[]);
   }
 
-  if (config?.countMiddleware && config?.countMiddleware.length) {
-    const middlewares = [...config.countMiddleware, CryptoWalletCount]
-    if (config.countNextMiddleware) {
-      middlewares.push(...config.countNextMiddleware);
+  if (config.enableAll || config?.count) {
+    const { before = [], after = [] } = config.count || defaultBeforeAfter;
+    setupRoute('/count', 'get', before, CryptoWalletCount as RequestHandler);
+    if (after.length) {
+      router.use(basePath + '/count', ...after);
     }
-    router.get('/count', ...middlewares as CountMiddleware[]);
   }
 
-  if (config?.groupByMiddleware && config?.groupByMiddleware.length) {
-    const middlewares = [...config.groupByMiddleware, CryptoWalletGroupBy]
-    if (config.groupByNextMiddleware) {
-      middlewares.push(...config.groupByNextMiddleware);
+  if (config.enableAll || config?.groupBy) {
+    const { before = [], after = [] } = config.groupBy || defaultBeforeAfter;
+    setupRoute('/groupby', 'get', before, CryptoWalletGroupBy as RequestHandler);
+    if (after.length) {
+      router.use(basePath + '/groupby', ...after);
     }
-    router.get('/groupby', ...middlewares as GroupByMiddleware[]);
   }
 
   return router;

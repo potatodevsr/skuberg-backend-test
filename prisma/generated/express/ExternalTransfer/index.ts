@@ -1,170 +1,145 @@
 
 import express, { RequestHandler } from 'express';
-import { ExternalTransferFindFirst, type FindFirstMiddleware } from './ExternalTransferFindFirst';
-import { ExternalTransferFindMany, type FindManyMiddleware } from './ExternalTransferFindMany';
-import { ExternalTransferFindUnique, type FindUniqueMiddleware } from './ExternalTransferFindUnique';
-import { ExternalTransferCreate, type CreateMiddleware } from './ExternalTransferCreate';
-import { ExternalTransferCreateMany, type CreateManyMiddleware } from './ExternalTransferCreateMany';
-import { ExternalTransferUpdate, type UpdateMiddleware } from './ExternalTransferUpdate';
-import { ExternalTransferUpdateMany, type UpdateManyMiddleware } from './ExternalTransferUpdateMany';
-import { ExternalTransferUpsert, type UpsertMiddleware } from './ExternalTransferUpsert';
-import { ExternalTransferDelete, type DeleteMiddleware } from './ExternalTransferDelete';
-import { ExternalTransferDeleteMany, type DeleteManyMiddleware } from './ExternalTransferDeleteMany';
-import { ExternalTransferAggregate, type AggregateMiddleware } from './ExternalTransferAggregate';
-import { ExternalTransferCount, type CountMiddleware } from './ExternalTransferCount';
-import { ExternalTransferGroupBy, type GroupByMiddleware } from './ExternalTransferGroupBy';
+import { ExternalTransferFindFirst } from './ExternalTransferFindFirst';
+import { ExternalTransferFindMany } from './ExternalTransferFindMany';
+import { ExternalTransferFindUnique } from './ExternalTransferFindUnique';
+import { ExternalTransferCreate } from './ExternalTransferCreate';
+import { ExternalTransferCreateMany } from './ExternalTransferCreateMany';
+import { ExternalTransferUpdate } from './ExternalTransferUpdate';
+import { ExternalTransferUpdateMany } from './ExternalTransferUpdateMany';
+import { ExternalTransferUpsert } from './ExternalTransferUpsert';
+import { ExternalTransferDelete } from './ExternalTransferDelete';
+import { ExternalTransferDeleteMany } from './ExternalTransferDeleteMany';
+import { ExternalTransferAggregate } from './ExternalTransferAggregate';
+import { ExternalTransferCount } from './ExternalTransferCount';
+import { ExternalTransferGroupBy } from './ExternalTransferGroupBy';
+import { RouteConfig } from "../RouteConfig";
 
-interface RouteConfig {
-  findFirstMiddleware?: FindFirstMiddleware[]
-  findFirstNextMiddleware?: RequestHandler[]
-
-  findManyMiddleware?: FindManyMiddleware[]
-  findManyNextMiddleware?: RequestHandler[]
-  
-  findUniqueMiddleware?: FindUniqueMiddleware[]
-  findUniqueNextMiddleware?: RequestHandler[]
-
-  createMiddleware?: CreateMiddleware[]
-  createNextMiddleware?: RequestHandler[]
-
-  createManyMiddleware?: CreateManyMiddleware[]
-  createManyNextMiddleware?: RequestHandler[]
-
-  updateMiddleware?: UpdateMiddleware[]
-  updateNextMiddleware?: RequestHandler[]
-
-  updateManyMiddleware?: UpdateManyMiddleware[]
-  updateManyNextMiddleware?: RequestHandler[]
-
-  upsertMiddleware?: UpsertMiddleware[]
-  upsertNextMiddleware?: RequestHandler[]
-
-  deleteMiddleware?: DeleteMiddleware[]
-  deleteNextMiddleware?: RequestHandler[]
-
-  deleteManyMiddleware?: DeleteManyMiddleware[]
-  deleteManyNextMiddleware?: RequestHandler[]
-
-  aggregateMiddleware?: AggregateMiddleware[]
-  aggregateNextMiddleware?: RequestHandler[]
-
-  countMiddleware?: CountMiddleware[]
-  countNextMiddleware?: RequestHandler[]
-
-  groupByMiddleware?: GroupByMiddleware[]
-  groupByNextMiddleware?: RequestHandler[]
-}
+const defaultBeforeAfter = {
+  before: [] as RequestHandler[],
+  after: [] as RequestHandler[],
+};
 
 /**
  * Generates an Express router for ExternalTransfer model.
  * @param config Contains optional middleware to enable routes.
  * @returns {express.Router}
  */
-export function ExternalTransferRouter(config: RouteConfig) {
+export function ExternalTransferRouter(config: RouteConfig<RequestHandler>) {
   const router = express.Router();
-  
-  if (config?.findFirstMiddleware && config?.findFirstMiddleware.length) {
-    const middlewares = [...config.findFirstMiddleware, ExternalTransferFindFirst]
-    if (config.findFirstNextMiddleware) {
-      middlewares.push(...config.findFirstNextMiddleware);
+  const basePath = config.addModelPrefix ? '/externaltransfer' : '';
+
+  const setupRoute = (
+    path: string,
+    method: "all" | "get" | "post" | "put" | "delete" | "patch" | "options" | "head",
+    middlewares: RequestHandler[],
+    handler: RequestHandler
+  ) => {
+    router[method](basePath + path, ...middlewares, handler);
+  };
+
+  if (config.enableAll || config?.findFirst) {
+    const { before = [], after = [] } = config.findFirst || defaultBeforeAfter;
+    setupRoute('/first', 'get', before, ExternalTransferFindFirst as RequestHandler);
+    if (after.length) {
+      router.use(basePath + '/first', ...after);
     }
-    router.get('/first', ...middlewares as FindFirstMiddleware[]);
   }
 
-  if (config?.findManyMiddleware && config?.findManyMiddleware.length) {
-    const middlewares = [...config.findManyMiddleware, ExternalTransferFindMany]
-    if (config.findManyNextMiddleware) {
-      middlewares.push(...config.findManyNextMiddleware);
+  if (config.enableAll || config?.findMany) {
+    const { before = [], after = [] } = config.findMany || defaultBeforeAfter;
+    setupRoute('/', 'get', before, ExternalTransferFindMany as RequestHandler);
+    if (after.length) {
+      router.use(basePath + '/', ...after);
     }
-    router.get('/', ...middlewares as FindManyMiddleware[]);
   }
 
-  if (config?.findUniqueMiddleware && config?.findUniqueMiddleware.length) {
-    const middlewares = [...config.findUniqueMiddleware, ExternalTransferFindUnique]
-    if (config.findUniqueNextMiddleware) {
-      middlewares.push(...config.findUniqueNextMiddleware);
+  if (config.enableAll || config?.findUnique) {
+    const { before = [], after = [] } = config.findUnique || defaultBeforeAfter;
+    setupRoute('/:id', 'get', before, ExternalTransferFindUnique as any);
+    if (after.length) {
+      router.use(basePath + '/:id', ...after);
     }
-    router.get('/:id', ...middlewares as FindUniqueMiddleware[]);
   }
 
-  if (config?.createMiddleware && config?.createMiddleware.length) {
-    const middlewares = [...config.createMiddleware, ExternalTransferCreate]
-    if (config.createNextMiddleware) {
-      middlewares.push(...config.createNextMiddleware);
+  if (config.enableAll || config?.create) {
+    const { before = [], after = [] } = config.create || defaultBeforeAfter;
+    setupRoute('/', 'post', before, ExternalTransferCreate as RequestHandler);
+    if (after.length) {
+      router.use(basePath + '/', ...after);
     }
-    router.post('/', ...middlewares as CreateMiddleware[]);
   }
 
-  if (config?.createManyMiddleware && config?.createManyMiddleware.length) {
-    const middlewares = [...config.createManyMiddleware, ExternalTransferCreateMany]
-    if (config.createManyNextMiddleware) {
-      middlewares.push(...config.createManyNextMiddleware);
+  if (config.enableAll || config?.createMany) {
+    const { before = [], after = [] } = config.createMany || defaultBeforeAfter;
+    setupRoute('/many', 'post', before, ExternalTransferCreateMany as RequestHandler);
+    if (after.length) {
+      router.use(basePath + '/many', ...after);
     }
-    router.post('/many', ...middlewares as CreateManyMiddleware[]);
   }
 
-  if (config?.updateMiddleware && config?.updateMiddleware.length) {
-    const middlewares = [...config.updateMiddleware, ExternalTransferUpdate]
-    if (config.updateNextMiddleware) {
-      middlewares.push(...config.updateNextMiddleware);
+  if (config.enableAll || config?.update) {
+    const { before = [], after = [] } = config.update || defaultBeforeAfter;
+    setupRoute('/', 'put', before, ExternalTransferUpdate as RequestHandler);
+    if (after.length) {
+      router.use(basePath + '/', ...after);
     }
-    router.put('/', ...middlewares as UpdateMiddleware[]);
   }
 
-  if (config?.updateManyMiddleware && config?.updateManyMiddleware.length) {
-    const middlewares = [...config.updateManyMiddleware, ExternalTransferUpdateMany]
-    if (config.updateManyNextMiddleware) {
-      middlewares.push(...config.updateManyNextMiddleware);
+  if (config.enableAll || config?.updateMany) {
+    const { before = [], after = [] } = config.updateMany || defaultBeforeAfter;
+    setupRoute('/many', 'put', before, ExternalTransferUpdateMany as RequestHandler);
+    if (after.length) {
+      router.use(basePath + '/many', ...after);
     }
-    router.put('/many', ...middlewares as UpdateManyMiddleware[]);
   }
 
-  if (config?.upsertMiddleware && config?.upsertMiddleware.length) {
-    const middlewares = [...config.upsertMiddleware, ExternalTransferUpsert]
-    if (config.upsertNextMiddleware) {
-      middlewares.push(...config.upsertNextMiddleware);
+  if (config.enableAll || config?.upsert) {
+    const { before = [], after = [] } = config.upsert || defaultBeforeAfter;
+    setupRoute('/', 'patch', before, ExternalTransferUpsert as RequestHandler);
+    if (after.length) {
+      router.use(basePath + '/', ...after);
     }
-    router.patch('/', ...middlewares as UpsertMiddleware[]);
   }
 
-  if (config?.deleteMiddleware && config?.deleteMiddleware.length) {
-    const middlewares = [...config.deleteMiddleware, ExternalTransferDelete]
-    if (config.deleteNextMiddleware) {
-      middlewares.push(...config.deleteNextMiddleware);
+  if (config.enableAll || config?.delete) {
+    const { before = [], after = [] } = config.delete || defaultBeforeAfter;
+    setupRoute('/', 'delete', before, ExternalTransferDelete as RequestHandler);
+    if (after.length) {
+      router.use(basePath + '/', ...after);
     }
-    router.delete('/', ...middlewares as DeleteMiddleware[]);
   }
 
-  if (config?.deleteManyMiddleware && config?.deleteManyMiddleware.length) {
-    const middlewares = [...config.deleteManyMiddleware, ExternalTransferDeleteMany]
-    if (config.deleteManyNextMiddleware) {
-      middlewares.push(...config.deleteManyNextMiddleware);
+  if (config.enableAll || config?.deleteMany) {
+    const { before = [], after = [] } = config.deleteMany || defaultBeforeAfter;
+    setupRoute('/many', 'delete', before, ExternalTransferDeleteMany as RequestHandler);
+    if (after.length) {
+      router.use(basePath + '/many', ...after);
     }
-    router.delete('/many', ...middlewares as DeleteManyMiddleware[]);
   }
 
-  if (config?.aggregateMiddleware && config?.aggregateMiddleware.length) {
-    const middlewares = [...config.aggregateMiddleware, ExternalTransferAggregate]
-    if (config.aggregateNextMiddleware) {
-      middlewares.push(...config.aggregateNextMiddleware);
+  if (config.enableAll || config?.aggregate) {
+    const { before = [], after = [] } = config.aggregate || defaultBeforeAfter;
+    setupRoute('/aggregate', 'get', before, ExternalTransferAggregate as RequestHandler);
+    if (after.length) {
+      router.use(basePath + '/aggregate', ...after);
     }
-    router.get('/aggregate', ...middlewares as AggregateMiddleware[]);
   }
 
-  if (config?.countMiddleware && config?.countMiddleware.length) {
-    const middlewares = [...config.countMiddleware, ExternalTransferCount]
-    if (config.countNextMiddleware) {
-      middlewares.push(...config.countNextMiddleware);
+  if (config.enableAll || config?.count) {
+    const { before = [], after = [] } = config.count || defaultBeforeAfter;
+    setupRoute('/count', 'get', before, ExternalTransferCount as RequestHandler);
+    if (after.length) {
+      router.use(basePath + '/count', ...after);
     }
-    router.get('/count', ...middlewares as CountMiddleware[]);
   }
 
-  if (config?.groupByMiddleware && config?.groupByMiddleware.length) {
-    const middlewares = [...config.groupByMiddleware, ExternalTransferGroupBy]
-    if (config.groupByNextMiddleware) {
-      middlewares.push(...config.groupByNextMiddleware);
+  if (config.enableAll || config?.groupBy) {
+    const { before = [], after = [] } = config.groupBy || defaultBeforeAfter;
+    setupRoute('/groupby', 'get', before, ExternalTransferGroupBy as RequestHandler);
+    if (after.length) {
+      router.use(basePath + '/groupby', ...after);
     }
-    router.get('/groupby', ...middlewares as GroupByMiddleware[]);
   }
 
   return router;

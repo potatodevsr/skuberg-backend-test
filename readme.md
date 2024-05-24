@@ -8,3 +8,8 @@
 
 Refer to `prisma/generated/express/**` to find out which subroutes has been set up.
 Refer to `https://www.prisma.io/docs/orm/reference/prisma-client-reference` to find out which parameters you can pass. For `GET` requests use encoded query parameters, for others - body payload.
+
+
+## Postman
+
+Import content of `/postman` into your postman to test API.
